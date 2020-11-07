@@ -15,7 +15,9 @@ It will return an instance of [Symfony's `Process`](https://symfony.com/doc/curr
 
 ## Support us
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us). 
+[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/ssh.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/ssh)
+
+We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
 
 We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
 
@@ -32,10 +34,16 @@ composer require spatie/ssh
 You can execute an SSH command like this:
 
 ```php
-$process = Ssh::create('user', 'host')->execute('your favorite command');
+$process = Ssh::create('user', 'example.com')->execute('your favorite command');
 ```
 
 It will return an instance of [Symfony's `Process`](https://symfony.com/doc/current/components/process.html).
+
+If you don't want to wait until the execute commands complete, you can call `executeAsync`
+
+```php
+$process = Ssh::create('user', 'example.com')->executeAsync('your favorite command');
+```
 
 ### Getting the result of a command
 
@@ -52,13 +60,12 @@ This is how you can get the output
 $process->getOutput();
 ```
 
-
 ### Running multiple commands
 
 To run multiple commands pass an array to the execute method.
 
 ```php
-$process = Ssh::create('user', 'host')->execute([
+$process = Ssh::create('user', 'example.com')->execute([
    'first command',
    'second command',
 ]);
@@ -81,7 +88,6 @@ Alternatively you can use the `usePort` function:
 Ssh::create('user', 'host')->usePort($port);
 ```
 
-
 ### Specifying the private key to use
 
 You can use `usePrivateKey` to specify a path to a private SSH key to use.
@@ -95,8 +101,46 @@ Ssh::create('user', 'host')->usePrivateKey('/home/user/.ssh/id_rsa');
 By default, strict host key checking is enabled. You can disable strict host key checking using `disableStrictHostKeyChecking`.
 
 ```php
-Ssh::create('user', 'host')->enableStrictHostKeyChecking();
+Ssh::create('user', 'host')->disableStrictHostKeyChecking();
 ```
+
+### Uploading & downloading files and directories
+
+You can upload files & directories to a host using:
+
+```php
+Ssh::create('user', 'host')->upload('path/to/local/file', 'path/to/host/file');
+```
+
+Or download them:
+
+```php
+Ssh::create('user', 'host')->download('path/to/host/file', 'path/to/local/file');
+```
+
+Under the hood the process will use `scp`.
+
+### Modifying the Symfony process
+
+Behind the scenes all commands will be performed using [Symfonys `Process`](https://symfony.com/doc/current/components/process.html).
+
+You can configure to the `Process` by using the `configureProcess` method. Here's and example where we disable the timeout.
+
+```php
+Ssh::create('user', 'host')->configureProcess(fn (Process $process) => $process->setTimeout(null));
+```
+
+### Immediately responding to output
+
+You can get notified whenever you command produces output by setting by passing a closure to `onOutput`. 
+
+```php
+Ssh::create('user', 'host')->onOutput(fn($type, $line) => echo $line)->execute('whoami');
+```
+
+Whenever there is output that close will get called with two parameters:
+- `type`: this can be `Symfony\Component\Process\Process::OUT` for regular output and `Symfony\Component\Process\Process::ERR` for error output
+- `line`: the output itself
 
 ## Testing
 
